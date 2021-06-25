@@ -10,17 +10,17 @@ export interface Transaction {
   category: string;
   created_at: string;
 }
-export type TransactionInput = Omit<Transaction, "id" | "created_at">;
 
+export type TransactionInput = Omit<Transaction, "id" | "created_at">;
 
 interface TransactionsContextProps {
   transactions: Transaction[];
   createTransaction: (transaction: TransactionInput) => Promise<void>;
 }
+
 const TransactionsContext = createContext<TransactionsContextProps>(
   { transactions: [], createTransaction: (_) => { return new Promise(resolve => resolve()) } }
 );
-
 
 interface TransactionsProviderProps {
   children: React.ReactNode;
@@ -28,36 +28,38 @@ interface TransactionsProviderProps {
 
 export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const {setLoadingState} = useLoading();
-   
+  const { setLoadingState } = useLoading();
+
   async function getTransactions() {
     try {
       setLoadingState(true)
       const user_id = localStorage.getItem('unique_id');
-      
-      const {data} = await  ApiService.get(`transactions/${user_id}`)
-      
+
+      const { data } = await ApiService.get(`transactions/${user_id}`)
+
       setTransactions(data.transactions);
     } finally {
       setLoadingState(false)
     }
   }
-  useEffect(() => {
-    getTransactions()
-  }, []);
 
   async function createTransaction(transactionInput: TransactionInput) {
     try {
       setLoadingState(true)
       const user_id = localStorage.getItem('unique_id');
-      
-      const {data} = await ApiService.post('/transactions', {...transactionInput, user_id: user_id});
-      
+
+      const { data } = await ApiService.post('/transactions', { ...transactionInput, user_id: user_id });
+
       setTransactions((oldTransactions) => [...oldTransactions, data.transaction]);
     } finally {
       setLoadingState(false)
     }
   }
+
+  useEffect(() => {
+    getTransactions()
+  }, []);
+
   return (
     <TransactionsContext.Provider value={{ transactions, createTransaction }}>
       {children}
